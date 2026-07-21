@@ -1,0 +1,14 @@
+# Datos locales (perfiles, logos, carruseles generados)
+/data/
+
+# Entorno virtual
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Sistema
+.DS_Store

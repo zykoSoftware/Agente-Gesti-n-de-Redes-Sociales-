@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ p.name }} · Agente de Redes{% endblock %}
+{% block content %}
+  <div class="row" style="justify-content:space-between;">
+    <div>
+      <a href="{{ url_for('index') }}" class="muted mono" style="font-size:13px;">&#8592; Empresas</a>
+      <h1 style="margin-top:6px;">{{ p.name }}</h1>
+      <p class="sub">
+        {% if p.website %}<a href="{{ p.website }}" target="_blank">{{ p.website }}</a> · {% endif %}
+        {{ p.sector or 'sin sector' }}{% if p.handle %} · @{{ p.handle }}{% endif %}
+      </p>
+    </div>
+    <form method="post" action="{{ url_for('delete', profile_id=p.id) }}"
+          onsubmit="return confirm('¿Eliminar esta empresa?');">
+      <button class="btn danger sm" type="submit">Eliminar</button>
+    </form>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1.4fr; margin-top:26px; align-items:start;">
+    <!-- Brand Kit -->
+    <div class="card">
+      <h2>Brand Kit</h2>
+      {% if p.logo %}
+        <img src="{{ url_for('media', profile_id=p.id, filename=p.logo) }}" alt="logo"
+             style="max-height:80px;max-width:100%;object-fit:contain;background:#0b0d11;border-radius:12px;padding:12px;margin-bottom:16px;">
+      {% else %}
+        <p class="muted">Sin logo todavía.</p>
+      {% endif %}
+
+      {% if p.brand %}
+        <label>Paleta detectada</label>
+        <div class="row" style="gap:8px; margin-bottom:14px;">
+          {% for key in ['accent','bg','surface','text','muted','danger'] %}
+            <div style="text-align:center;">
+              <div class="swatch" style="background:{{ p.brand.colors[key] }}"></div>
+              <div class="mono muted" style="font-size:10px;margin-top:3px;">{{ p.brand.colors[key] }}</div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="field"><span class="tag">Fuente: {{ p.brand.font.split(',')[0].replace("'","") }}</span>
+          <span class="tag">Origen: {{ p.brand.source }}</span></div>
+        {% if p.brand.tone %}<p class="muted" style="font-size:14px;">“{{ p.brand.tone[:180] }}”</p>{% endif %}
+        {% if p.brand.error %}<p class="flash warn" style="font-size:13px;">Aviso al analizar la web: {{ p.brand.error }}. Se usaron los colores del logo.</p>{% endif %}
+      {% else %}
+        <p class="muted">Marca sin analizar.</p>
+      {% endif %}
+
+      <div class="row" style="margin-top:14px;">
+        <form method="post" action="{{ url_for('reanalyze', profile_id=p.id) }}">
+          <button class="btn ghost sm" type="submit">Re-analizar marca</button>
+        </form>
+        <form method="post" action="{{ url_for('update_logo', profile_id=p.id) }}" enctype="multipart/form-data" class="row" style="gap:6px;">
+          <input type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,.webp,.gif" style="width:auto;font-size:12px;">
+          <button class="btn ghost sm" type="submit">Cambiar logo</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Generar carrusel -->
+    <div>
+      <div class="card">
+        <h2>Generar carrusel</h2>
+        <form method="post" action="{{ url_for('generate', profile_id=p.id) }}" class="row" style="align-items:flex-end;">
+          <div class="field" style="flex:1; margin-bottom:0;">
+            <label>Pilar de contenido</label>
+            <select name="pillar">
+              {% for key, label in pillars.items() %}
+                <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn" type="submit">Generar carrusel</button>
+        </form>
+        <p class="muted" style="font-size:13px;margin:12px 0 0;">Se generan 4 slides en PNG (1080&times;1350) con los colores y el logo de la empresa.</p>
+      </div>
+
+      <!-- Carruseles generados -->
+      <div style="margin-top:22px;">
+        <h2>Carruseles generados</h2>
+        {% if posts %}
+          {% for post in posts %}
+            <div class="card" style="margin-bottom:16px;">
+              <div class="row" style="justify-content:space-between;margin-bottom:12px;">
+                <strong>{{ post.pillar_label }}</strong>
+                <span class="tag mono">{{ post.id }}</span>
+              </div>
+              <div class="row" style="gap:10px;overflow-x:auto;">
+                {% for slide in post.slides %}
+                  <img src="{{ url_for('media', profile_id=p.id, filename='posts/' + post.id + '/' + slide) }}"
+                       alt="slide" style="height:260px;border-radius:10px;border:1px solid var(--line);flex:none;">
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="card muted">Todavía no has generado ningún carrusel.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
